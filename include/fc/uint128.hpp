@@ -105,6 +105,14 @@ namespace fc
           const uint64_t max64 = std::numeric_limits<uint64_t>::max();
           return uint128( max64, max64 );
       }
+     
+      static uint128 max() {
+         return max_value();
+      }
+     
+      static uint128 min() {
+         return uint128();
+      }
 
       static void full_product( const uint128& a, const uint128& b, uint128& result_hi, uint128& result_lo );
 

@@ -17,6 +17,11 @@ namespace fc {
     *  Implemented using spec from:
     *  https://www.securecoding.cert.org/confluence/display/c/INT32-C.+Ensure+that+operations+on+signed+integers+do+not+result+in+overflow
     */
+   
+#define Max(T) (std::is_class<T>()?T::max():std::numeric_limits<T>::max())
+
+#define Min(T) (std::is_class<T>()?T::min():std::numeric_limits<T>::min())
+   
    template<typename T>
    struct safe
    {
@@ -29,23 +34,23 @@ namespace fc {
 
       static safe min()
       {
-          return std::numeric_limits<T>::min();
+          return  Min(T);
       }
       static safe max()
       {
-          return std::numeric_limits<T>::max();
+          return  Max(T);
       }
 
       friend safe operator + ( const safe& a, const safe& b )
       {
-          if( b.value > 0 && a.value > (std::numeric_limits<T>::max() - b.value) ) FC_CAPTURE_AND_THROW( overflow_exception, (a)(b) );
-          if( b.value < 0 && a.value < (std::numeric_limits<T>::min() - b.value) ) FC_CAPTURE_AND_THROW( underflow_exception, (a)(b) );
+          if( b.value > 0 && a.value > ( Max(T) - b.value) ) FC_CAPTURE_AND_THROW( overflow_exception, (a)(b) );
+          if( b.value < 0 && a.value < ( Min(T) - b.value) ) FC_CAPTURE_AND_THROW( underflow_exception, (a)(b) );
           return safe( a.value + b.value );
       }
       friend safe operator - ( const safe& a, const safe& b )
       {
-          if( b.value > 0 && a.value < (std::numeric_limits<T>::min() + b.value) ) FC_CAPTURE_AND_THROW( underflow_exception, (a)(b) );
-          if( b.value < 0 && a.value > (std::numeric_limits<T>::max() + b.value) ) FC_CAPTURE_AND_THROW( overflow_exception, (a)(b) );
+          if( b.value > 0 && a.value < ( Min(T) + b.value) ) FC_CAPTURE_AND_THROW( underflow_exception, (a)(b) );
+          if( b.value < 0 && a.value > ( Max(T) + b.value) ) FC_CAPTURE_AND_THROW( overflow_exception, (a)(b) );
           return safe( a.value - b.value );
       }
 
@@ -55,22 +60,23 @@ namespace fc {
           {
               if( b.value > 0 )
               {
-                  if( a.value > (std::numeric_limits<T>::max() / b.value) ) FC_CAPTURE_AND_THROW( overflow_exception, (a)(b) );
+                 auto x=Max(T) / b.value;
+                  if( a.value > ( Max(T) / b.value) ) FC_CAPTURE_AND_THROW( overflow_exception, (a)(b) );
               }
               else
               {
-                  if( b.value < (std::numeric_limits<T>::min() / a.value) ) FC_CAPTURE_AND_THROW( underflow_exception, (a)(b) );
+                  if( b.value < ( Min(T) / a.value) ) FC_CAPTURE_AND_THROW( underflow_exception, (a)(b) );
               }
           }
           else
           {
               if( b.value > 0 )
               {
-                  if( a.value < (std::numeric_limits<T>::min() / b.value) ) FC_CAPTURE_AND_THROW( underflow_exception, (a)(b) );
+                  if( a.value < ( Min(T) / b.value) ) FC_CAPTURE_AND_THROW( underflow_exception, (a)(b) );
               }
               else
               {
-                  if( a.value != 0 && b.value < (std::numeric_limits<T>::max() / a.value) ) FC_CAPTURE_AND_THROW( overflow_exception, (a)(b) );
+                  if( a.value != 0 && b.value < ( Max(T) / a.value) ) FC_CAPTURE_AND_THROW( overflow_exception, (a)(b) );
               }
           }
 
@@ -80,19 +86,19 @@ namespace fc {
       friend safe operator / ( const safe& a, const safe& b )
       {
           if( b.value == 0 ) FC_CAPTURE_AND_THROW( divide_by_zero_exception, (a)(b) );
-          if( a.value == std::numeric_limits<T>::min() && b.value == -1 ) FC_CAPTURE_AND_THROW( overflow_exception, (a)(b) );
+          if( a.value ==  Min(T) && b.value == -1 ) FC_CAPTURE_AND_THROW( overflow_exception, (a)(b) );
           return safe( a.value / b.value );
       }
       friend safe operator % ( const safe& a, const safe& b )
       {
           if( b.value == 0 ) FC_CAPTURE_AND_THROW( divide_by_zero_exception, (a)(b) );
-          if( a.value == std::numeric_limits<T>::min() && b.value == -1 ) FC_CAPTURE_AND_THROW( overflow_exception, (a)(b) );
+          if( a.value ==  Min(T) && b.value == -1 ) FC_CAPTURE_AND_THROW( overflow_exception, (a)(b) );
           return safe( a.value % b.value );
       }
 
       safe operator - ()const
       {
-          if( value == std::numeric_limits<T>::min() ) FC_CAPTURE_AND_THROW( overflow_exception, (*this) );
+          if( value ==  Min(T) ) FC_CAPTURE_AND_THROW( overflow_exception, (*this) );
           return safe( -value );
       }
 
