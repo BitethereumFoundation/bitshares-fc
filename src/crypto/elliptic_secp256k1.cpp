@@ -166,6 +166,23 @@ namespace fc { namespace ecc {
         FC_ASSERT( secp256k1_ecdsa_recover_compact( detail::_get_context(), (unsigned char*) digest.data(), (unsigned char*) c.begin() + 1, (unsigned char*) my->_key.begin(), (int*) &pk_len, 1, (*c.begin() - 27) & 3 ) );
         FC_ASSERT( pk_len == my->_key.size() );
     }
+   public_key_point_data public_key::get_uncompress_public_key( const compact_signature& c, const fc::sha256& digest, bool check_canonical )
+   {
+      int nV = c.data[0];
+      if (nV<27 || nV>=35)
+         FC_THROW_EXCEPTION( exception, "unable to reconstruct public key from signature" );
+      
+      if( check_canonical )
+      {
+         FC_ASSERT( is_canonical( c ), "signature is not canonical" );
+      }
+      
+      public_key_point_data _key;
+      unsigned int pk_len;
+      FC_ASSERT( secp256k1_ecdsa_recover_compact( detail::_get_context(), (unsigned char*) digest.data(), (unsigned char*) c.begin() + 1, (unsigned char*) _key.begin(), (int*) &pk_len, 0, (*c.begin() - 27) & 3 ) );
+      FC_ASSERT( pk_len == _key.size() );
+      return _key;
+   }
 
     extended_public_key::extended_public_key( const public_key& k, const fc::sha256& c,
                                               int child, int parent, uint8_t depth )
